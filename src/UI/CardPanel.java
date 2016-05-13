@@ -11,8 +11,10 @@ public class CardPanel extends JPanel{
 	private Color color;
 	private String value;
 	private JLabel text;
+	private Card c;
 	
 	public CardPanel(Card card){
+		this.c = card;
 		init(card);
 		this.setPreferredSize(new Dimension(100,100));
 		this.setLayout(new BorderLayout());
@@ -53,6 +55,10 @@ public class CardPanel extends JPanel{
 		}
 		this.setBackground(color);
 
+	}
+	
+	public Card getCard(){
+		return this.c;
 	}
 
 public static void main(String[] args) {

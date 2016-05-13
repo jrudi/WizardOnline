@@ -5,15 +5,18 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
+import connect.Connection;
+import messages.*;
+
 public class Login extends JFrame{
 	private static final long serialVersionUID = 1L;
-	
+	private Connection connect;
 	private JButton loginBtn, registerBtn, cancelBtn;
 	private JTextField nameField;
 	//private JPasswordField passwordField;
 	
-	public Login(){
-		
+	public Login(Connection c){
+		this.connect = c;
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 //TODO WindowListener
 		createComponents();
@@ -30,14 +33,14 @@ public class Login extends JFrame{
 		this.setLayout(new BorderLayout());
 		
 		loginBtn = new JButton("Login");
-		registerBtn = new JButton("Registrieren");
+	//	registerBtn = new JButton("Registrieren");
 	 	cancelBtn = new JButton("Abbrechen");
 	 	ButtonGroup bg = new ButtonGroup();
 	 	
 	 	JPanel btnPanel = new JPanel();
 	 	btnPanel.setLayout(new GridLayout(3,1));
 	 	btnPanel.add(loginBtn);
-	 	btnPanel.add(registerBtn);
+	 //	btnPanel.add(registerBtn);
 	 	btnPanel.add(cancelBtn);
 	 	
 	 	nameField = new JTextField(25);
@@ -56,7 +59,7 @@ public class Login extends JFrame{
 	
 	public void addListeners(){
 		loginBtn.addActionListener(new ButtonListener());
-		registerBtn.addActionListener(new ButtonListener());
+		//registerBtn.addActionListener(new ButtonListener());
 		cancelBtn.addActionListener(new ButtonListener());
 	}
 	
@@ -66,17 +69,25 @@ public class Login extends JFrame{
 		public void actionPerformed(ActionEvent e) {
 			switch (((JButton)e.getSource()).getText()){
 			case "Login":
+				connect.send(new MessageLOGIN(nameField.getText()));
+				Message m = connect.receive();
+				if(m instanceof MessageLOGIN_ERROR){
+					JOptionPane.showMessageDialog(Login.this, ((MessageLOGIN_ERROR)m).getError());
+					nameField.setText("");
+				}else{
+					Lobby lobby = new Lobby(connect);
+					lobby.setVisible(true);
+					dispose();
+				}
 				break;
 			case "Registrieren":
 				break;
 			case "Abbrechen":
+				connect.quit();
 				break;
 			}
 		}
 		
 	}
 	
-	public static void main(String[] args) {
-		Login l = new Login();
-	}
 }

@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import messages.Message;
+import messages.*;
 
 public class Connection {
 	private Socket socket;
@@ -47,4 +47,21 @@ public class Connection {
 			return null;
 		}
     }
+
+    public void disconnect() {
+
+    	try {
+			this.input.close();
+			this.output.close();
+			this.socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void quit() {
+		send(new MessageQUIT());
+		disconnect();
+		
+	}
 }
