@@ -12,9 +12,10 @@ public class GameController {
 	private ArrayList<Card> cards;
 	private int currentRound;
 	private Connection conn;
-	private CardColor trump;
+	private CardColor trump,follow;
 	private GameBoard gb;
 	private boolean active, bidding;
+
 
 	public GameController(Connection c) {
 		this.conn = c;
@@ -40,7 +41,15 @@ public class GameController {
 	public boolean isBidding() {
 		return bidding;
 	}
+	
+	public CardColor getFollow() {
+		return follow;
+	}
 
+	public void setFollow(CardColor follow) {
+		this.follow = follow;
+	}
+	
 	public ArrayList<Card> getCards() {
 		return cards;
 	}
@@ -58,11 +67,11 @@ public class GameController {
 	}
 	
 	public void placeBid(int bid){
-		conn.send(new MessageBID(bid));
+		conn.send(new MessageBID(bid, conn.getUsername()));
 	}
 	
 	public void playCard(Card c) {
-		conn.send(new MessageCARDPLAYED(c));
+		conn.send(new MessageCARDPLAYED(c, conn.getUsername()));
 		cards.remove(c);
 		this.setActive(false);
 	}
@@ -70,23 +79,36 @@ public class GameController {
 	public boolean cardPlayable(Card c) {
 		if (c.getColor().equals(CardColor.FOOL) || c.getColor().equals(CardColor.WIZARD)) {
 			return true;
-		} else if (hasTrump()) {
-			return c.getColor().equals(trump);
+		} else if (hasFollow()) {
+			return c.getColor().equals(follow);
 		} else {
 			return true;
 		}
 	}
 
-	private boolean hasTrump() {
+	private boolean hasFollow() {
 		for (Card c : cards) {
-			if (c.getColor().equals(trump)) {
+			if (c.getColor().equals(follow)) {
 				return true;
 			}
 		}
 		return false;
 	}
 	
+	public GameBoard getGameBoard(){
+		return this.gb;
+	}
+	
 	public void initializeGame(ArrayList<String> players){
 		gb = new GameBoard(players);
 	}
+	
+	public void roundEnd(MessageROUNDEND mr){
+		this.setFollow(null);
+	}
+
+	public void setTrump(CardColor trump2) {
+		this.trump = trump2;
+	}
+
 }

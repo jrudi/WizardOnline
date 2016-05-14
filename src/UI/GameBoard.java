@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -15,40 +16,50 @@ import application.GameController;
 import connect.Connection;
 import domain.Card;
 import domain.CardColor;
-import messages.MessageBID;
 
 public class GameBoard extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private ArrayList<UserPanel> users;
 	private ArrayList<CardPanel> cards;
-	// private ArrayList<CardPanel> playedCards;
+	private HashMap<String, CardPanel> playedCards = new HashMap<String, CardPanel>();
 	private GameController gc;
-	private JPanel cardsPanel, usersPanel;
+	private JPanel cardsPanel, usersPanel, playedPanel;
 	private JFrame bidFrame;
 	private JButton plus, minus, send;
 	private JTextField num;
 
 	public GameBoard(ArrayList<String> players) {
+
 		this.setLayout(new BorderLayout());
-		this.cardsPanel = new JPanel();
-		this.usersPanel = new JPanel();
-		this.setSize(1700, 1000);
-
-		initPlayers(players);
-
-		this.add(cardsPanel);
-		this.setVisible(true);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.addWindowListener(new CloseListener());
-		JPanel midPanel = new JPanel();
-		midPanel.setBackground(Color.DARK_GRAY);
-		midPanel.setPreferredSize(new Dimension(1000, 400));
-		this.add(midPanel, BorderLayout.CENTER);
+		this.setSize(1700, 1000);
+		this.setMaximumSize(new Dimension(1700, 1000));
+		this.setResizable(false);
+
+		this.cardsPanel = new JPanel();
+		this.usersPanel = new JPanel();
+		this.playedPanel = new JPanel();
+
+		initPlayers(players);
+		initPlayedCards();
 		createbidFrame();
+
+		this.add(cardsPanel, BorderLayout.SOUTH);
+		this.add(playedPanel, BorderLayout.CENTER);
+
+		this.setVisible(true);
+
 	}
-	
-	public void createbidFrame(){
+
+	public void initPlayedCards() {
+		playedPanel.setBackground(Color.DARK_GRAY);
+		playedPanel.setPreferredSize(new Dimension(1700, 600));
+		playedPanel.setLayout(new FlowLayout());
+	}
+
+	public void createbidFrame() {
 		bidFrame = new JFrame("Bieten");
 		bidFrame.setLayout(new FlowLayout());
 		plus = new JButton(">>");
@@ -62,18 +73,32 @@ public class GameBoard extends JFrame {
 		bidFrame.add(plus);
 		bidFrame.add(send);
 
-		bidFrame.setPreferredSize(new Dimension(200,120));
-		bidFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		bidFrame.setVisible(true);
+		bidFrame.setPreferredSize(new Dimension(200, 120));
+		bidFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		bidFrame.setVisible(false);
 		bidFrame.setLocationRelativeTo(null);
 		bidFrame.pack();
-		
+
 		plus.addActionListener(new ButtonListener());
 		minus.addActionListener(new ButtonListener());
 		send.addActionListener(new ButtonListener());
 
 	}
+	
+	public void initPlayers(ArrayList<String> players) {
+		users = new ArrayList<UserPanel>();
+		int width = (this.getWidth() - (players.size() * 200)) / players.size();
+		System.out.println(width + "   " + this.getWidth());
 
+		for (String s : players) {
+			UserPanel p = new UserPanel(s);
+			users.add(p);
+			usersPanel.add(p);
+			usersPanel.add((Box.createRigidArea(new Dimension(width, 10))));
+		}
+		this.add(usersPanel, BorderLayout.NORTH);
+	}
+	
 	public void setGameController(GameController gamec) {
 		this.gc = gamec;
 
@@ -88,18 +113,20 @@ public class GameBoard extends JFrame {
 		return null;
 	}
 
-	public void initPlayers(ArrayList<String> players) {
-		users = new ArrayList<UserPanel>();
-		int width = (this.getWidth() - (players.size() * 200)) / players.size();
-
-		for (String s : players) {
-			UserPanel p = new UserPanel(s);
-			System.out.println(width + "");
-			users.add(p);
-			usersPanel.add(p);
-			usersPanel.add((Box.createRigidArea(new Dimension(width, 10))));
+	public void setAllUsersInactive() {
+		for (UserPanel up : users) {
+			up.setInactive();
 		}
-		this.add(usersPanel, BorderLayout.NORTH);
+	}
+
+	public void setOneUserActive(String username, boolean activeOrBidding) {
+		this.setAllUsersInactive();
+		if (activeOrBidding) {
+			getUser(username).setActive();
+		} else {
+			getUser(username).setBidding();
+		}
+
 	}
 
 	public void updateCards(ArrayList<Card> newCards) {
@@ -108,10 +135,30 @@ public class GameBoard extends JFrame {
 			newPanels.add(new CardPanel(c));
 		}
 		cards = newPanels;
-		drawCards();
+		drawHandCards();
 	}
 
-	public void drawCards() {
+	public void drawPlayedCards() {
+		playedPanel.removeAll();
+		int width = (this.getWidth() - (users.size() * 200)) / users.size();
+		System.out.println(width + "   " + this.getWidth());
+
+		for (UserPanel up : users) {
+			if (playedCards.get(up.getUsername()) == null) {
+				JPanel border = new JPanel();
+				border.setPreferredSize(new Dimension(200, 200));
+				border.setBorder(new LineBorder(Color.BLACK, 3, false));
+				playedPanel.add(border);
+			} else {
+				playedCards.get(up.getUsername()).setPreferredSize(new Dimension(200, 200));
+				playedPanel.add(playedCards.get(up.getUsername()));
+			}
+			playedPanel.add((Box.createRigidArea(new Dimension(width - 20, 10))));
+
+		}
+	}
+
+	public void drawHandCards() {
 		this.remove(cardsPanel);
 		cardsPanel = new JPanel();
 		cardsPanel.setLayout(new GridLayout(2, cards.size() / 2));
@@ -124,27 +171,38 @@ public class GameBoard extends JFrame {
 		this.pack();
 	}
 
-	
-	private class ButtonListener implements ActionListener{
-		public void actionPerformed(ActionEvent e){
+	public void playCard(String username, Card card) {
+		CardPanel cp = new CardPanel(card);
+		playedCards.put(username, cp);
+		drawPlayedCards();
+
+	}
+
+	public void removePlayedCards(){
+		playedCards = new HashMap<String, CardPanel>();
+		drawPlayedCards();
+	}
+	private class ButtonListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
 			int i = Integer.parseInt(num.getText());
-			if(e.getSource()==plus){
-				if(i<gc.getCurrentRound()){
+			if (e.getSource() == plus) {
+				if (i < gc.getCurrentRound()) {
 					i++;
-					num.setText(i+"");
+					num.setText(i + "");
 				}
-			}else if(e.getSource()==minus){
-				if(i>0){
+			} else if (e.getSource() == minus) {
+				if (i > 0) {
 					i--;
-					num.setText(i+"");
+					num.setText(i + "");
 
 				}
-			}else if(e.getSource()==send){
-				gc.getConnection().send(new MessageBID(i));
+			} else if (e.getSource() == send) {
+				gc.placeBid(i);
 				bidFrame.dispose();
 			}
 		}
 	}
+
 	private class ClickListener extends MouseAdapter {
 		public void mouseClicked(MouseEvent e) {
 			if (gc.isActive()) {
@@ -171,7 +229,7 @@ public class GameBoard extends JFrame {
 		players.add("Jonas2");
 		players.add("Jonas3");
 		players.add("Jonas4");
-		// players.add("Jonas5");
+		players.add("Jonas5");
 		// players.add("Jonas6");
 		GameBoard gb = new GameBoard(players);
 		Connection c = new Connection();
@@ -193,7 +251,7 @@ public class GameBoard extends JFrame {
 		cards.add(new Card(12, CardColor.RED));
 		// cards.add(new Card(2,CardColor.RED));
 		// cards.add(new Card(5,CardColor.RED));
-		//
+
 		cards.add(new Card(5, CardColor.GREEN));
 		cards.add(new Card(5, CardColor.GREEN));
 		cards.add(new Card(5, CardColor.GREEN));
@@ -207,6 +265,12 @@ public class GameBoard extends JFrame {
 		gc.setCards(cards);
 		gc.setActive(true);
 		gb.updateCards(cards);
+
+		gb.playCard("Jonas4", new Card(4, CardColor.RED));
+		gb.playCard("Jonas3", new Card(3, CardColor.RED));
+		gb.playCard("Jonas5", new Card(5, CardColor.RED));
+		gb.playCard("Jonas2", new Card(2, CardColor.RED));
+		gb.playCard("Jonas1", new Card(1, CardColor.RED));
 
 	}
 

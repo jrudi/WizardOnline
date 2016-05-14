@@ -69,12 +69,15 @@ public class Login extends JFrame{
 		public void actionPerformed(ActionEvent e) {
 			switch (((JButton)e.getSource()).getText()){
 			case "Login":
-				connect.send(new MessageLOGIN(nameField.getText()));
+				String name = nameField.getText();
+				connect.send(new MessageLOGIN(name));
 				Message m = connect.receive();
 				if(m instanceof MessageLOGIN_ERROR){
 					JOptionPane.showMessageDialog(Login.this, ((MessageLOGIN_ERROR)m).getError());
 					nameField.setText("");
 				}else{
+					connect.setUsername(name);
+					connect.start();
 					Lobby lobby = new Lobby(connect);
 					lobby.setVisible(true);
 					dispose();
