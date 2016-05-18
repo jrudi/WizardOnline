@@ -3,6 +3,8 @@ package domain;
 import java.io.Serializable;
 
 public class Card implements Serializable, Comparable<Card>{
+	
+	private static final long serialVersionUID = 1L;
 	private int value;
 	private CardColor color;
 

@@ -110,5 +110,8 @@ public class GameController {
 	public void setTrump(CardColor trump2) {
 		this.trump = trump2;
 	}
-
+	
+	public CardColor getTrump(){
+		return trump;
+	}
 }

@@ -11,20 +11,20 @@ import messages.*;
 public class Login extends JFrame{
 	private static final long serialVersionUID = 1L;
 	private Connection connect;
-	private JButton loginBtn, registerBtn, cancelBtn;
+	private JButton loginBtn, cancelBtn;//,registerBtn;
 	private JTextField nameField;
 	//private JPasswordField passwordField;
 	
 	public Login(Connection c){
 		this.connect = c;
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-//TODO WindowListener
 		createComponents();
 		addListeners();
 		this.pack();
 		this.setVisible(true);
 		
-		
+		//TODO WindowListener
+
 	 	
 	}
 	
@@ -33,13 +33,12 @@ public class Login extends JFrame{
 		this.setLayout(new BorderLayout());
 		
 		loginBtn = new JButton("Login");
-	//	registerBtn = new JButton("Registrieren");
 	 	cancelBtn = new JButton("Abbrechen");
-	 	ButtonGroup bg = new ButtonGroup();
 	 	
 	 	JPanel btnPanel = new JPanel();
 	 	btnPanel.setLayout(new GridLayout(3,1));
 	 	btnPanel.add(loginBtn);
+	 //	registerBtn = new JButton("Registrieren");
 	 //	btnPanel.add(registerBtn);
 	 	btnPanel.add(cancelBtn);
 	 	
